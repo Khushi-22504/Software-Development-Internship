@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>E-Commerce Data Extractor Pro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .gradient-bg {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .card-shadow {
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    .progress-bar { transition: width 0.3s ease; }
+    .status-indicator { width: 8px; height: 8px; border-radius: 50%; display:inline-block; margin-right:8px; }
+    .status-success { background-color:#10b981; }
+    .status-warning { background-color:#f59e0b; }
+    .status-error { background-color:#ef4444; }
+    .status-processing { background-color:#3b82f6; animation:pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.5;} }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- Header -->
+  <div class="gradient-bg text-white py-6">
+    <div class="container mx-auto px-4">
+      <h1 class="text-3xl font-bold">🕷 E-Commerce Data Extractor Pro</h1>
+      <p class="text-blue-100 mt-2">Advanced web scraping tool for product data extraction</p>
+    </div>
+  </div>
+
+  <div class="container mx-auto px-4 py-8">
+    <!-- Configuration Panel -->
+    <div class="bg-white rounded-lg card-shadow p-6 mb-6">
+      <h2 class="text-xl font-semibold text-gray-800 mb-4">🔧 Scraping Configuration</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Target Website</label>
+          <select id="websiteSelect" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+            <option value="amazon">Amazon (Demo)</option>
+            <option value="ebay">eBay (Demo)</option>
+            <option value="etsy">Etsy (Demo)</option>
+            <option value="custom">Custom URL</option>
+          </select>
+          <input type="url" id="customUrl" placeholder="Enter custom URL" class="w-full px-3 py-2 border border-gray-300 rounded-md mt-2 hidden">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Product Category</label>
+          <select id="categorySelect" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+            <option value="electronics">Electronics</option>
+            <option value="clothing">Clothing & Fashion</option>
+            <option value="home">Home & Garden</option>
+            <option value="books">Books</option>
+            <option value="sports">Sports & Outdoors</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Max Products</label>
+          <input type="number" id="maxProducts" value="50" min="1" max="1000" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Delay (seconds)</label>
+          <input type="number" id="delay" value="2" min="1" max="10" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Output Format</label>
+          <select id="outputFormat" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+            <option value="csv">CSV</option>
+            <option value="json">JSON</option>
+            <option value="xlsx">Excel (XLSX)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="mt-6 flex gap-4">
+        <button onclick="startExtraction()" id="startBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold">🚀 Start Extraction</button>
+        <button onclick="stopExtraction()" id="stopBtn" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold hidden">⏹ Stop Extraction</button>
+        <button onclick="resetExtraction()" id="resetBtn" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold">🔄 Reset</button>
+      </div>
+    </div>
+
+    <!-- Progress Panel -->
+    <div id="progressPanel" class="bg-white rounded-lg card-shadow p-6 mb-6 hidden">
+      <h2 class="text-xl font-semibold text-gray-800 mb-4">📊 Extraction Progress</h2>
+      <div class="mb-4">
+        <div class="flex justify-between text-sm text-gray-600 mb-1">
+          <span>Overall Progress</span>
+          <span id="progressPercent">0%</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-2">
+          <div id="progressBar" class="bg-blue-600 h-2 rounded-full progress-bar" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+        <div class="text-center"><div class="text-2xl font-bold text-blue-600" id="pagesScraped">0</div><div class="text-sm text-gray-600">Pages Scraped</div></div>
+        <div class="text-center"><div class="text-2xl font-bold text-green-600" id="productsFound">0</div><div class="text-sm text-gray-600">Products Found</div></div>
+        <div class="text-center"><div class="text-2xl font-bold text-yellow-600" id="errorsCount">0</div><div class="text-sm text-gray-600">Errors</div></div>
+        <div class="text-center"><div class="text-2xl font-bold text-purple-600" id="timeElapsed">00:00</div><div class="text-sm text-gray-600">Time Elapsed</div></div>
+      </div>
+      <div class="bg-gray-50 rounded-lg p-4">
+        <h3 class="font-semibold text-gray-800 mb-2">Current Status</h3>
+        <div id="statusLog" class="space-y-1 max-h-32 overflow-y-auto text-sm"></div>
+      </div>
+    </div>
+
+    <!-- Results Panel -->
+    <div id="resultsPanel" class="bg-white rounded-lg card-shadow p-6 hidden">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold text-gray-800">📋 Extracted Data</h2>
+        <div class="flex gap-2">
+          <button onclick="exportData()" id="exportBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold">💾 Export Data</button>
+          <button onclick="previewData()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-semibold">👁 Preview</button>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full border-collapse border border-gray-300">
+          <thead>
+            <tr class="bg-gray-50">
+              <th class="border px-3 py-2 text-left text-xs font-semibold uppercase">Product Name</th>
+              <th class="border px-3 py-2 text-left text-xs font-semibold uppercase">Price</th>
+              <th class="border px-3 py-2 text-left text-xs font-semibold uppercase">Rating</th>
+              <th class="border px-3 py-2 text-left text-xs font-semibold uppercase">Reviews</th>
+              <th class="border px-3 py-2 text-left text-xs font-semibold uppercase">Availability</th>
+              <th class="border px-3 py-2 text-left text-xs font-semibold uppercase">URL</th>
+            </tr>
+          </thead>
+          <tbody id="dataTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+<script>
+let extractionActive=false,extractionInterval,startTime,extractedData=[];
+const sampleData={electronics:[{name:"iPhone 15 Pro Max",price:1199.99,rating:4.8,reviews:2847,availability:"In Stock",url:"#"}]};
+function startExtraction(){if(extractionActive)return;extractionActive=true;startTime=Date.now();extractedData=[];
+document.getElementById("startBtn").classList.add("hidden");
+document.getElementById("stopBtn").classList.remove("hidden");
+document.getElementById("progressPanel").classList.remove("hidden");
+updateProgress(0);updateCounters(0,0,0);simulateExtraction();}
+function stopExtraction(){extractionActive=false;clearInterval(extractionInterval);
+document.getElementById("startBtn").classList.remove("hidden");
+document.getElementById("stopBtn").classList.add("hidden");
+addStatusMessage("Extraction stopped by user","warning");}
+function resetExtraction(){stopExtraction();document.getElementById("progressPanel").classList.add("hidden");
+document.getElementById("resultsPanel").classList.add("hidden");
+updateProgress(0);updateCounters(0,0,0);document.getElementById("statusLog").innerHTML="";document.getElementById("dataTable").innerHTML="";extractedData=[];}
+function simulateExtraction(){const category=document.getElementById("categorySelect").value;
+const maxProducts=parseInt(document.getElementById("maxProducts").value);
+let current=0;let pages=0;let errors=0;
+addStatusMessage("Starting extraction process...","processing");
+addStatusMessage(`Target: ${maxProducts} products from ${category} category`,"success");
+extractionInterval=setInterval(()=>{if(!extractionActive||current>=maxProducts){if(current>=maxProducts)completeExtraction();return;}
+if(current%10===0){pages++;addStatusMessage(`Scraping page ${pages}...`,"processing");}
+if(Math.random()<0.1){errors++;addStatusMessage("Error: Rate limit detected, retrying...","error");updateCounters(pages,current,errors);return;}
+const prodIndex=current%sampleData.electronics.length;
+let prod={...sampleData.electronics[prodIndex]};prod.name+=` #${current+1}`;
+extractedData.push(prod);current++;updateProgress((current/maxProducts)*100);updateCounters(pages,current,errors);
+if(current%5===0)addStatusMessage(`Extracted ${current} products...`,"success");},500);}
+function completeExtraction(){extractionActive=false;clearInterval(extractionInterval);
+document.getElementById("startBtn").classList.remove("hidden");document.getElementById("stopBtn").classList.add("hidden");
+addStatusMessage("Extraction completed successfully!","success");
+addStatusMessage(`Total products extracted: ${extractedData.length}`,"success");displayResults();}
+function displayResults(){document.getElementById("resultsPanel").classList.remove("hidden");
+const tb=document.getElementById("dataTable");tb.innerHTML="";
+extractedData.forEach(p=>{const row=document.createElement("tr");row.innerHTML=`<td>${p.name}</td><td>$${p.price.toFixed(2)}</td><td>⭐ ${p.rating}</td><td>${p.reviews}</td><td>${p.availability}</td><td><a href="${p.url}" target="_blank">Link</a></td>`;tb.appendChild(row);});}
+function updateProgress(p){document.getElementById("progressBar").style.width=p+"%";document.getElementById("progressPercent").textContent=Math.round(p)+"%";}
+function updateCounters(pages,prods,errs){document.getElementById("pagesScraped").textContent=pages;document.getElementById("productsFound").textContent=prods;document.getElementById("errorsCount").textContent=errs;if(startTime){const e=Math.floor((Date.now()-startTime)/1000);const m=Math.floor(e/60);const s=e%60;document.getElementById("timeElapsed").textContent=`${m.toString().padStart(2,"0")}:${s.toString().padStart(2,"0")}`;}}
+function addStatusMessage(msg,type){const log=document.getElementById("statusLog");const div=document.createElement("div");div.className="flex items-center";const t=new Date().toLocaleTimeString();div.innerHTML=`<span class="status-indicator status-${type}"></span><span class="text-xs text-gray-500 mr-2">${t}</span><span>${msg}</span>`;log.appendChild(div);log.scrollTop=log.scrollHeight;}
+function exportData(){const fmt=document.getElementById("outputFormat").value;if(extractedData.length===0){alert("No data!");return;}
+let content,filename,type;if(fmt==="csv"){content=generateCSV();filename="data.csv";type="text/csv";}else if(fmt==="json"){content=JSON.stringify(extractedData,null,2);filename="data.json";type="application/json";}else{alert("Excel export needs library");return;}
+downloadFile(content,filename,type);}
+function generateCSV(){const headers=["Name","Price","Rating","Reviews","Availability","URL"];const rows=extractedData.map(p=>[p.name,p.price,p.rating,p.reviews,p.availability,p.url]);return[headers.join(","),...rows.map(r=>r.join(","))].join("\n");}
+function downloadFile(c,f,m){const blob=new Blob([c],{type:m});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=f;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}
+function previewData(){if(extractedData.length===0){alert("No data!");return;}alert(JSON.stringify(extractedData.slice(0,5),null,2));}
+</script>
+</body>
+</html>
